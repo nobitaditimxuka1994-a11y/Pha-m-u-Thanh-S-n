@@ -119,10 +119,10 @@ st.divider()
 
 # --- NÚT TÍNH CÔNG THỨC ---
 # --- NÚT TÍNH CÔNG THỨC THÔNG MINH (PHÂN TÁCH LỚP SƠN & LỌC CHÂN MÀU) ---
+# --- NÚT TÍNH CÔNG THỨC THÔNG MINH (PHÂN TÁCH LỚP SƠN & LỌC CHÂN MÀU ĐÃ MỞ RỘNG) ---
 if st.button("🚀 XUẤT CÔNG THỨC CHI TIẾT", type="primary", use_container_width=True):
     
     # 1. BỘ NÃO AI: NHẬN DIỆN MÀU PHỨC TẠP (3 LỚP)
-    # Anh có thể thêm các mã 3 lớp khác vào danh sách này
     three_stage_codes = {
         "46V": {"nen": "MÀU ĐỎ SẬM hoặc BẠC (M82)", "huong_dan": "Sơn lớp nền khuất màu lót, sau đó dùng công thức Rio dưới đây pha loãng với bóng (Candy) để thổi lớp 2."},
         "46G": {"nen": "MÀU XÁM ĐẬM (G410 + BK01)", "huong_dan": "Sơn nền xám cho đều màu, sau đó thổi lớp nhũ xám trong suốt lên trên."},
@@ -144,7 +144,7 @@ if st.button("🚀 XUẤT CÔNG THỨC CHI TIẾT", type="primary", use_containe
             st.success("Pha tinh màu theo công thức bên dưới")
         st.divider()
 
-    # 2. THUẬT TOÁN BÓC TÁCH TINH MÀU RIO
+    # 2. THUẬT TOÁN BÓC TÁCH TINH MÀU RIO (ĐÃ MỞ RỘNG ĐỂ HIỆN CHI TIẾT)
     all_colors = {}
     for group_name, colors in RIO_MASTER.items():
         if group_name != "MÀU TRONG & PHỤ GIA":
@@ -153,18 +153,18 @@ if st.button("🚀 XUẤT CÔNG THỨC CHI TIẾT", type="primary", use_containe
     raw_weights = []
     for name, h in all_colors.items():
         dist = np.linalg.norm(np.array(target_rgb) - np.array(hex_to_rgb(h)))
-        # Ưu tiên màu cực gần bằng bình phương khoảng cách
-        w = 1 / (dist**2 + 0.1) if dist < 120 else 0  
+        # Thay đổi lên 200 để AI mở rộng phạm vi tìm màu phối, không bỏ sót chân màu phụ
+        w = 1 / (dist**2 + 0.1) if dist < 200 else 0  
         raw_weights.append((name, w))
         
     raw_weights.sort(key=lambda x: x[1], reverse=True)
     
-    # Lọc lấy 3 chân màu chính yếu nhất (Tránh đục màu)
+    # Lấy tối đa 4 chân màu chính yếu nhất để công thức đầy đủ và chi tiết hơn
     valid_weights = []
     total_w = 0
     count = 0
     for name, w in raw_weights:
-        if w > 0 and count < 3: 
+        if w > 0 and count < 4: 
             valid_weights.append((name, w))
             total_w += w
             count += 1
@@ -176,7 +176,8 @@ if st.button("🚀 XUẤT CÔNG THỨC CHI TIẾT", type="primary", use_containe
             st.markdown("#### 🧪 Tinh màu Rio (Cốt chính)")
             for n, w in valid_weights:
                 amt = (w / total_w) * total_vol
-                if amt >= 15.0: # Chỉ hiện các thành phần đáng kể
+                # Giảm xuống 1.0 ml để hiện cả những giọt màu điều chỉnh nhỏ nhất
+                if amt >= 1.0: 
                     st.success(f"{n}: **{amt:.1f} ml**")
         with res_c2:
             st.markdown("#### ⚙️ Phụ gia & Đóng rắn")
