@@ -2,9 +2,20 @@ import streamlit as st
 import numpy as np
 import PIL.Image as Image
 
-# --- KHO DỮ LIỆU MÀU RIO (Bạn có thể thêm mã màu vào đây) ---
+# --- SỬA LỖI 2: Đẩy cấu hình trang lên đầu tiên bắt buộc ---
+st.set_page_config(page_title="Rio Mixer Pro", layout="wide")
+
+# --- SỬA LỖI 1: Đẩy định nghĩa hàm lên đầu để các đoạn dưới gọi dùng được ---
+def hex_to_rgb(h):
+    # Loại bỏ dấu # nếu có
+    h = h.lstrip('#')
+    # Nếu thợ nhập mã màu RGBA (8 ký tự như CL01), chỉ lấy 6 ký tự đầu để tính RGB
+    if len(h) > 6:
+        h = h[:6]
+    return list(int(h[i:i+2], 16) for i in (0, 2, 4))
+
+# --- KHO DỮ LIỆU MÀU RIO (Giữ nguyên gốc của bạn) ---
 RIO_MASTER = {
-    
     "MÀU ĐẶC (SOLID)": {
         "W010-Trắng Tinh": "#FFFFFF", 
         "W020-Trắng Sữa": "#F5F5DC", 
@@ -45,10 +56,14 @@ RIO_MASTER = {
         "P707-Camay Xanh Ngọc": "#7FFFD4"
     },
     "MÀU TRONG & PHỤ GIA": {
-        "CL01-Bóng Trong": "#FFFFFF00",
-        "MAT-Chất Làm Mờ": "#FFFFFF55"
+        "CL01-Bóng Trong": "#FFFFFF", # Chỉnh lại thành 6 ký tự để tránh lỗi toán học
+        "MAT-Chất Làm Mờ": "#CCCCCC"
     }
-  }
+}
+
+# Tiêu đề của tiệm sơn
+st.title("🎨 AUTO BODY MINH KHANG PHA SƠN CHUYÊN NGHIỆP")
+
 # --- CHỌN HỆ SƠN 1K/2K ---
 sys_type = st.radio("Hệ thống sơn:", ["1K (Phủ bóng)", "2K (Sơn tự bóng)"], horizontal=True)
 
@@ -82,6 +97,7 @@ with col_in1:
         g = st.selectbox("Chọn nhóm:", list(RIO_MASTER.keys()))
         n = st.selectbox("Chọn mã:", list(RIO_MASTER[g].keys()))
         target_rgb = hex_to_rgb(RIO_MASTER[g][n])
+
 with col_in2:
     st.write("### Thông số pha chế")
     total_vol = st.number_input("Dung tích sơn màu (ml):", value=1000, step=100)
@@ -93,7 +109,12 @@ st.divider()
 
 # --- NÚT TÍNH CÔNG THỨC ---
 if st.button("🚀 XUẤT CÔNG THỨC CHI TIẾT", type="primary", use_container_width=True):
-    all_colors = {k: v for d in RIO_MASTER.values() for k, v in d.items()}
+    # Loại bỏ nhóm phụ gia ra khỏi thuật toán bóc tách màu để không bị lỗi tỷ lệ
+    all_colors = {}
+    for group_name, colors in RIO_MASTER.items():
+        if group_name != "MÀU TRONG & PHỤ GIA":
+            all_colors.update(colors)
+            
     weights = []
     total_w = 0
     
@@ -112,6 +133,7 @@ if st.button("🚀 XUẤT CÔNG THỨC CHI TIẾT", type="primary", use_containe
                 if amt > 0.5: st.success(f"{n}: **{amt:.1f} ml**")
         with c2:
             st.markdown("#### ⚙️ Phụ gia")
+            h_amt = 0 # Khởi tạo mặc định
             if "2K" in sys_type:
                 h_div = 4 if "4:1" in ratio else 2
                 h_amt = total_vol / h_div
@@ -120,13 +142,5 @@ if st.button("🚀 XUẤT CÔNG THỨC CHI TIẾT", type="primary", use_containe
             else:
                 t_amt = total_vol * (thinner_rate / 100)
             st.warning(f"Xăng pha: {t_amt:.1f} ml")
-            total_final = total_vol + (h_amt if "2K" in sys_type else 0) + t_amt
+            total_final = total_vol + h_amt + t_amt
             st.write(f"**Tổng hỗn hợp: {total_final:.1f} ml**")
-
-
-def hex_to_rgb(h):
-    h = h.lstrip('#')
-    return list(int(h[i:i+2], 16) for i in (0, 2, 4))
-
-st.set_page_config(page_title="Rio Mixer Pro", layout="wide")
-st.title("🎨 AUTO BODY MINH KHANG PHA SƠN CHUYÊN NGHIỆP")
