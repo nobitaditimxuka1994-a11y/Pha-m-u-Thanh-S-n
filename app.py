@@ -59,7 +59,7 @@ CAR_BRANDS_DB = {
 }
 
 st.title("🎨 AUTO BODY MINH KHANG PHA SƠN CHUYÊN NGHIỆP")
-
+st.title( "vui lòng liên hệ nhà phát triển phần mềm sdt 0963227718")
 # --- CHỌN HỆ SƠN 1K/2K ---
 sys_type = st.radio("Hệ thống sơn:", ["1K (Phủ bóng)", "2K (Sơn tự bóng)"], horizontal=True)
 st.divider()
